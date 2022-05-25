@@ -17,6 +17,7 @@ async function run() {
     try {
         await client.connect();
         const toolCollection = client.db('engineer-reliance').collection('tools');
+        const purchasingCollection = client.db('engineer-reliance').collection('purchasing');
 
         app.get('/tools', async (req, res) => {
             const query = {};
@@ -29,6 +30,21 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const tool = await toolCollection.findOne(query);
             res.send(tool);
+        })
+
+        app.get('/available', async (req, res) => {
+            // const toolName = req.query.toolName;
+            const tools = await toolCollection.find().toArray();
+            const query = { toolName: "Claw Hammer" };
+            const purchase = await purchasingCollection.find().toArray();
+            res.send(purchase);
+
+        })
+
+        app.post('/purchasing', async (req, res) => {
+            const purchasing = req.body;
+            const result = await purchasingCollection.insertOne(purchasing);
+            res.send(result);
         })
     }
     finally {
@@ -46,3 +62,7 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`engineer app listening port ${port}`)
 })
+
+
+
+
