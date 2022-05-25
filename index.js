@@ -35,12 +35,19 @@ async function run() {
         app.get('/available', async (req, res) => {
             // const toolName = req.query.toolName;
             const tools = await toolCollection.find().toArray();
-            const query = { toolName: "Claw Hammer" };
+            // const query = { toolName: "Claw Hammer" };
             const purchase = await purchasingCollection.find().toArray();
             res.send(purchase);
 
         })
 
+        app.get('/purchasing', async (req, res) => {
+            const buyer = req.query.buyer;
+            const query = { buyer: buyer };
+            const purchasing = await purchasingCollection.find().toArray();
+            res.send(purchasing);
+
+        })
         app.post('/purchasing', async (req, res) => {
             const purchasing = req.body;
             const result = await purchasingCollection.insertOne(purchasing);
