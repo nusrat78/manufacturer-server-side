@@ -49,6 +49,37 @@ async function run() {
             res.send(tool);
         })
 
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        })
+
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+
+
+        })
+
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -59,15 +90,15 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
-            console.log(process.env.ACCESS_TOKEN_SECRET)
             res.send({ result, token });
 
         })
 
         app.get('/available', async (req, res) => {
-            // const toolName = req.query.toolName;
-            const tools = await toolCollection.find().toArray();
-            // const query = { toolName: "Claw Hammer" };
+            const toolName = req.query.toolName;
+            console.log(toolName);
+            // const tools = await toolCollection.find().toArray();
+            // const query = { toolName: toolName };
             const purchase = await purchasingCollection.find().toArray();
             res.send(purchase);
 
@@ -75,10 +106,12 @@ async function run() {
 
         app.get('/purchasing', verifyJWT, async (req, res) => {
             const buyer = req.query.buyer;
+            console.log(buyer);
             const decodedEmail = req.decoded.email;
             if (buyer === decodedEmail) {
-                const query = { buyer: buyer };
-                const purchasing = await purchasingCollection.find().toArray();
+                const query = { buyerEmail: buyer };
+                // console.log(query);
+                const purchasing = await purchasingCollection.find(query).toArray();
                 return res.send(purchasing);
 
             }
